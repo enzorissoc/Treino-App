@@ -113,6 +113,36 @@ h1 {
   padding: 12px;
   -webkit-user-select: none;
   user-select: none;
+  transition: transform 0.15s, opacity 0.15s, background 0.15s;
+}
+
+.drag-handle {
+  color: #555;
+  font-size: 1.2rem;
+  cursor: grab;
+  padding: 4px;
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.exercise-row.dragging {
+  opacity: 0.4;
+  background: #0f0f0f;
+}
+
+.exercise-row.drag-over {
+  border-color: #00e676;
+  background: #1a2a1a;
+}
+
+.drag-clone {
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  background: #1a2a1a;
+  border: 2px solid #00e676;
 }
 
 .exercise-row input[type="checkbox"] {
@@ -123,12 +153,18 @@ h1 {
   cursor: pointer;
 }
 
+.exercise-row input[type="checkbox"]:checked ~ .exercise-info .exercise-name {
+  text-decoration: line-through;
+  color: #666;
+}
+
 .exercise-info {
   flex: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
 }
 
 .exercise-name {
