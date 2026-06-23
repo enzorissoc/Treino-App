@@ -21,26 +21,36 @@ function saveExercises() {
       name: row.dataset.name,
       series: row.dataset.series,
       reps: row.dataset.reps,
+      rest: row.dataset.rest,
+      notes: row.dataset.notes,
       checked: row.querySelector('input[type="checkbox"]').checked
     });
   });
   localStorage.setItem(getStorageKey(), JSON.stringify(exercises));
 }
 
-function createExerciseRow(name, series, reps, checked) {
+function createExerciseRow(name, series, reps, rest, notes, checked) {
   var row = document.createElement('div');
   row.className = 'exercise-row';
   row.dataset.name = name || '';
   row.dataset.series = series || '';
   row.dataset.reps = reps || '';
+  row.dataset.rest = rest || '';
+  row.dataset.notes = notes || '';
   row.draggable = true;
 
   row.innerHTML =
     '<span class="drag-handle">☰</span>' +
     '<input type="checkbox"' + (checked ? ' checked' : '') + '>' +
     '<div class="exercise-info" onclick="editExercise(this.parentElement)">' +
-      '<span class="exercise-name">' + (name || 'Sem nome') + '</span>' +
-      '<span class="exercise-detail">' + (series || '0') + 'x' + (reps || '0') + '</span>' +
+      '<div class="exercise-info-top">' +
+        '<span class="exercise-name">' + (name || 'Sem nome') + '</span>' +
+        '<div class="exercise-details">' +
+          '<span class="exercise-detail">' + (series || '0') + 'x' + (reps || '0') + '</span>' +
+          (rest ? '<span class="exercise-rest">⏸ ' + rest + 's</span>' : '') +
+        '</div>' +
+      '</div>' +
+      (notes ? '<span class="exercise-notes">' + notes + '</span>' : '') +
     '</div>' +
     '<button class="btn-remove" onclick="removeExercise(this)">&times;</button>';
 
@@ -63,8 +73,16 @@ function createAddModal() {
           '</div>' +
           '<div class="modal-field">' +
             '<label>Repetições</label>' +
-            '<input type="number" id="input-reps" min="1" value="10">' +
+            '<input type="text" id="input-reps" placeholder="Ex: 8-12" value="10">' +
           '</div>' +
+        '</div>' +
+        '<div class="modal-field">' +
+          '<label>Descanso (segundos)</label>' +
+          '<input type="number" id="input-rest" min="0" value="60">' +
+        '</div>' +
+        '<div class="modal-field">' +
+          '<label>Notas</label>' +
+          '<textarea id="input-notes" placeholder="Ex: Foco na execução..." rows="2"></textarea>' +
         '</div>' +
       '</div>' +
       '<div class="modal-actions">' +
@@ -80,6 +98,8 @@ function createAddModal() {
     var inputName = document.getElementById('input-name');
     var inputSeries = document.getElementById('input-series');
     var inputReps = document.getElementById('input-reps');
+    var inputRest = document.getElementById('input-rest');
+    var inputNotes = document.getElementById('input-notes');
 
     setTimeout(function() {
       inputName.focus();
@@ -99,7 +119,13 @@ function createAddModal() {
         return;
       }
       overlay.remove();
-      resolve({ name: name, series: inputSeries.value, reps: inputReps.value });
+      resolve({
+        name: name,
+        series: inputSeries.value,
+        reps: inputReps.value,
+        rest: inputRest.value,
+        notes: inputNotes.value.trim()
+      });
     });
 
     inputName.addEventListener('keydown', function(e) {
@@ -119,11 +145,11 @@ async function addExercise() {
   var data = await createAddModal();
   if (!data) return;
   var list = document.getElementById('exercise-list');
-  list.appendChild(createExerciseRow(data.name, data.series, data.reps, false));
+  list.appendChild(createExerciseRow(data.name, data.series, data.reps, data.rest, data.notes, false));
   saveExercises();
 }
 
-function createEditModal(name, series, reps) {
+function createEditModal(name, series, reps, rest, notes) {
   var overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML =
@@ -138,8 +164,16 @@ function createEditModal(name, series, reps) {
           '</div>' +
           '<div class="modal-field">' +
             '<label>Repetições</label>' +
-            '<input type="number" id="input-reps" min="1" value="' + (reps || '10') + '">' +
+            '<input type="text" id="input-reps" placeholder="Ex: 8-12" value="' + (reps || '10') + '">' +
           '</div>' +
+        '</div>' +
+        '<div class="modal-field">' +
+          '<label>Descanso (segundos)</label>' +
+          '<input type="number" id="input-rest" min="0" value="' + (rest || '60') + '">' +
+        '</div>' +
+        '<div class="modal-field">' +
+          '<label>Notas</label>' +
+          '<textarea id="input-notes" placeholder="Ex: Foco na execução..." rows="2">' + (notes || '').replace(/</g, '&lt;') + '</textarea>' +
         '</div>' +
       '</div>' +
       '<div class="modal-actions">' +
@@ -155,6 +189,8 @@ function createEditModal(name, series, reps) {
     var inputName = document.getElementById('input-name');
     var inputSeries = document.getElementById('input-series');
     var inputReps = document.getElementById('input-reps');
+    var inputRest = document.getElementById('input-rest');
+    var inputNotes = document.getElementById('input-notes');
 
     setTimeout(function() {
       inputName.focus();
@@ -174,7 +210,13 @@ function createEditModal(name, series, reps) {
         return;
       }
       overlay.remove();
-      resolve({ name: newName, series: inputSeries.value, reps: inputReps.value });
+      resolve({
+        name: newName,
+        series: inputSeries.value,
+        reps: inputReps.value,
+        rest: inputRest.value,
+        notes: inputNotes.value.trim()
+      });
     });
 
     inputName.addEventListener('keydown', function(e) {
@@ -191,13 +233,27 @@ function createEditModal(name, series, reps) {
 }
 
 async function editExercise(row) {
-  var data = await createEditModal(row.dataset.name, row.dataset.series, row.dataset.reps);
+  var data = await createEditModal(row.dataset.name, row.dataset.series, row.dataset.reps, row.dataset.rest, row.dataset.notes);
   if (!data) return;
   row.dataset.name = data.name;
   row.dataset.series = data.series;
   row.dataset.reps = data.reps;
+  row.dataset.rest = data.rest;
+  row.dataset.notes = data.notes;
   row.querySelector('.exercise-name').textContent = data.name;
-  row.querySelector('.exercise-detail').textContent = data.series + 'x' + data.reps;
+  var detailsDiv = row.querySelector('.exercise-details');
+  detailsDiv.innerHTML =
+    '<span class="exercise-detail">' + data.series + 'x' + data.reps + '</span>' +
+    (data.rest ? '<span class="exercise-rest">⏸ ' + data.rest + 's</span>' : '');
+  var infoDiv = row.querySelector('.exercise-info');
+  var oldNotes = infoDiv.querySelector('.exercise-notes');
+  if (oldNotes) oldNotes.remove();
+  if (data.notes) {
+    var notesSpan = document.createElement('span');
+    notesSpan.className = 'exercise-notes';
+    notesSpan.textContent = data.notes;
+    infoDiv.appendChild(notesSpan);
+  }
   saveExercises();
 }
 
@@ -402,7 +458,7 @@ function init() {
   var list = document.getElementById('exercise-list');
 
   exercises.forEach(function(ex) {
-    list.appendChild(createExerciseRow(ex.name, ex.series, ex.reps, ex.checked));
+    list.appendChild(createExerciseRow(ex.name, ex.series, ex.reps, ex.rest, ex.notes, ex.checked));
   });
 
   document.getElementById('btn-add').addEventListener('click', addExercise);

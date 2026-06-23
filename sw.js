@@ -1,4 +1,4 @@
-var CACHE_NAME = 'treino-app-v3';
+var CACHE_NAME = 'treino-app-v7';
 var FILES = [
   './',
   './index.html',
