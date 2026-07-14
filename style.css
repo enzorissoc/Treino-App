@@ -116,6 +116,14 @@ h1 {
   opacity: 1;
 }
 
+.treino-card-aquecimento::before {
+  background: linear-gradient(135deg, rgba(255, 159, 10, 0.15), rgba(255, 159, 10, 0));
+}
+
+.treino-card-aquecimento {
+  color: #ff9f0a;
+}
+
 .exercise-list {
   display: flex;
   flex-direction: column;
@@ -136,8 +144,49 @@ h1 {
   transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
 }
 
-.exercise-row:active {
+.exercise-row:not(.dragging):not(.drag-over):active {
   transform: scale(0.98);
+}
+
+.exercise-check {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  border-radius: 50%;
+  border: 2px solid #48484a;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.exercise-check svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: transparent;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.2s ease;
+}
+
+.exercise-row.checked .exercise-check {
+  background: #30d158;
+  border-color: #30d158;
+}
+
+.exercise-row.checked .exercise-check svg {
+  stroke: #000;
+}
+
+.exercise-row.checked .exercise-name {
+  text-decoration: line-through;
+  opacity: 0.4;
 }
 
 .drag-handle {
@@ -160,36 +209,31 @@ h1 {
 }
 
 .exercise-row.drag-over {
-  background: #1a2a1a;
-  box-shadow: inset 0 0 0 1.5px #30d158;
+  box-shadow: 0 -2px 0 0 #30d158;
+}
+
+.biset-group.drag-over {
+  box-shadow: 0 -2px 0 0 #bf5af2;
 }
 
 .drag-clone {
-  border-radius: 14px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
   background: #2c2c2e;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 0 0 1.5px #30d158;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1.5px #30d158;
 }
 
-.exercise-row input[type="checkbox"] {
-  width: 24px;
-  height: 24px;
-  accent-color: #30d158;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.exercise-row input[type="checkbox"]:checked ~ .exercise-info .exercise-name {
-  text-decoration: line-through;
+.exercise-number {
+  font-size: 0.75rem;
+  font-weight: 600;
   color: #636366;
-}
-
-.exercise-row input[type="checkbox"]:checked ~ .exercise-info .exercise-rest {
-  opacity: 0.4;
-}
-
-.exercise-row input[type="checkbox"]:checked ~ .exercise-info .exercise-notes {
-  opacity: 0.4;
+  background: #2c2c2e;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .exercise-info {
@@ -255,6 +299,16 @@ h1 {
   background: rgba(255, 159, 10, 0.12);
   padding: 4px 8px;
   border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.exercise-rest:active {
+  background: rgba(255, 159, 10, 0.3);
+  transform: scale(0.95);
 }
 
 .btn-remove {
@@ -400,6 +454,119 @@ h1 {
   transform: scale(0.98);
 }
 
+.modal-btn-choice {
+  background: #30d158;
+  color: #000;
+  flex: 1;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.modal-btn-choice:active {
+  background: #28b74d;
+  transform: scale(0.98);
+}
+
+.modal-btn-biset {
+  background: #bf5af2;
+  color: #000;
+  flex: 1;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.modal-btn-biset:active {
+  background: #a855d9;
+  transform: scale(0.98);
+}
+
+.biset-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(191, 90, 242, 0.1);
+  border: 1.5px solid rgba(191, 90, 242, 0.3);
+  border-radius: 14px;
+  padding: 14px 12px;
+  position: relative;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+}
+
+.biset-group:not(.dragging):not(.drag-over):active {
+  transform: scale(0.98);
+}
+
+.biset-group.dragging {
+  opacity: 0.3;
+  background: rgba(191, 90, 242, 0.05);
+}
+
+.biset-group .drag-handle {
+  color: #bf5af2;
+}
+
+.biset-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.biset-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #bf5af2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.biset-group .exercise-row {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(191, 90, 242, 0.2);
+  margin: 0;
+  padding: 10px;
+}
+
+.biset-group .exercise-row:first-of-type {
+  border-radius: 10px 10px 6px 6px;
+}
+
+.biset-group .exercise-row:last-of-type {
+  border-radius: 6px 6px 10px 10px;
+}
+
+.biset-group .exercise-row .exercise-number {
+  display: none;
+}
+
+.biset-group .exercise-row .drag-handle,
+.biset-group .exercise-row .btn-remove {
+  display: none;
+}
+
+.biset-group > .btn-remove {
+  position: absolute;
+  right: 12px;
+  top: 14px;
+}
+
 .modal-form {
   margin-bottom: 20px;
   text-align: left;
@@ -506,12 +673,115 @@ h1 {
   }
 }
 
-@supports (-webkit-touch-callout: none) {
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: calc(80px + env(safe-area-inset-bottom));
-  }
-  .app-header {
-    padding-top: calc(14px + env(safe-area-inset-top));
-  }
+.rest-timer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  z-index: 200;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.rest-timer-overlay.active {
+  display: flex;
+}
+
+.rest-timer-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.rest-timer-svg {
+  width: 220px;
+  height: 220px;
+}
+
+.rest-timer-circle {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+.rest-timer-track {
+  fill: none;
+  stroke: #2c2c2e;
+  stroke-width: 8;
+}
+
+.rest-timer-progress {
+  fill: none;
+  stroke: #ff9f0a;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 565.49;
+  stroke-dashoffset: 0;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.rest-timer-overlay.alarm .rest-timer-progress {
+  stroke: #ff453a;
+}
+
+.rest-timer-count {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -2px;
+}
+
+.rest-timer-overlay.alarm .rest-timer-count {
+  color: #ff453a;
+  animation: alarmPulse 0.6s ease infinite;
+}
+
+.rest-timer-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #8e8e93;
+  text-align: center;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rest-timer-cancel {
+  background: #48484a;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.rest-timer-cancel:active {
+  background: #636366;
+  transform: scale(0.97);
+}
+
+@keyframes alarmPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
