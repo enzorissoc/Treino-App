@@ -626,7 +626,16 @@ function initDragAndDrop() {
   });
 }
 
-var restTimer = { el: null, interval: null, remaining: 0, total: 0, wakeLock: null, alarmTimeout: null };
+var restTimer = {
+  el: null,
+  interval: null,
+  endTime: 0,
+  total: 0,
+  name: '',
+  wakeLock: null,
+  alarmTimeout: null,
+  fired: false
+};
 
 function createTimerOverlay() {
   if (restTimer.el) return;
@@ -656,14 +665,15 @@ function startRestTimer(btn, seconds) {
   cancelRestTimer();
 
   var row = btn.closest('.exercise-row');
-  var name = row ? row.dataset.name : '';
+  restTimer.name = row ? (row.dataset.name || '') : '';
 
   createTimerOverlay();
-  restTimer.remaining = seconds;
   restTimer.total = seconds;
+  restTimer.endTime = Date.now() + seconds * 1000;
+  restTimer.fired = false;
 
   document.getElementById('rest-timer-count').textContent = seconds;
-  document.getElementById('rest-timer-name').textContent = name || 'Descanso';
+  document.getElementById('rest-timer-name').textContent = restTimer.name || 'Descanso';
   setProgress(1);
   restTimer.el.classList.remove('alarm');
   restTimer.el.classList.add('active');
@@ -673,21 +683,30 @@ function startRestTimer(btn, seconds) {
     Notification.requestPermission();
   }
 
-  restTimer.interval = setInterval(function() {
-    restTimer.remaining--;
-    document.getElementById('rest-timer-count').textContent = restTimer.remaining;
-    setProgress(restTimer.remaining / restTimer.total);
-    if (restTimer.remaining <= 0) {
-      clearInterval(restTimer.interval);
-      restTimer.interval = null;
-      triggerAlarm();
-    }
-  }, 1000);
+  tickTimer();
+  restTimer.interval = setInterval(tickTimer, 1000);
+}
+
+function tickTimer() {
+  if (!restTimer.endTime) return;
+  var remaining = Math.max(0, Math.ceil((restTimer.endTime - Date.now()) / 1000));
+  var countEl = document.getElementById('rest-timer-count');
+  if (countEl) countEl.textContent = remaining;
+  setProgress(remaining / restTimer.total);
+
+  if (remaining <= 0 && !restTimer.fired) {
+    restTimer.fired = true;
+    clearInterval(restTimer.interval);
+    restTimer.interval = null;
+    triggerAlarm();
+  }
 }
 
 function cancelRestTimer() {
   if (restTimer.interval) { clearInterval(restTimer.interval); restTimer.interval = null; }
   if (restTimer.alarmTimeout) { clearTimeout(restTimer.alarmTimeout); restTimer.alarmTimeout = null; }
+  restTimer.endTime = 0;
+  restTimer.fired = false;
   if (restTimer.el) restTimer.el.classList.remove('active', 'alarm');
   releaseWakeLock();
 }
@@ -699,18 +718,28 @@ function setProgress(p) {
 }
 
 function triggerAlarm() {
+  if (!restTimer.el) return;
   restTimer.el.classList.add('alarm');
   playAlarmSound();
   if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
   if ('Notification' in window && Notification.permission === 'granted') {
-    try { new Notification('Descanso acabou!', { body: 'Hora do próximo exercício', icon: 'icon-192.svg', vibrate: [200, 100, 200] }); } catch(e) {}
+    try {
+      new Notification('Descanso acabou!', {
+        body: (restTimer.name || 'Exercício') + ' — hora de treinar!',
+        icon: 'icon-192.svg',
+        vibrate: [200, 100, 200],
+        tag: 'rest-timer',
+        renotify: true
+      });
+    } catch(e) {}
   }
-  restTimer.alarmTimeout = setTimeout(function() { cancelRestTimer(); }, 4000);
+  restTimer.alarmTimeout = setTimeout(function() { cancelRestTimer(); }, 5000);
 }
 
 function playAlarmSound() {
   try {
     var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
     var tones = [880, 1100, 1320, 1100, 880];
     var t = 0.12;
     var now = ctx.currentTime;
@@ -727,6 +756,7 @@ function playAlarmSound() {
       osc.stop(now + i * t + t);
     });
     setTimeout(function() {
+      if (ctx.state === 'suspended') return;
       var now2 = ctx.currentTime;
       tones.forEach(function(freq, i) {
         var osc = ctx.createOscillator();
@@ -744,10 +774,20 @@ function playAlarmSound() {
   } catch(e) {}
 }
 
+document.addEventListener('visibilitychange', function() {
+  if (!restTimer.endTime || restTimer.fired) return;
+  tickTimer();
+  if (restTimer.fired) return;
+  if (!restTimer.interval) {
+    restTimer.interval = setInterval(tickTimer, 1000);
+  }
+});
+
 function requestWakeLock() {
   if ('wakeLock' in navigator) {
     navigator.wakeLock.request('screen').then(function(lock) {
       restTimer.wakeLock = lock;
+      lock.addEventListener('release', function() { restTimer.wakeLock = null; });
     }).catch(function() {});
   }
 }
